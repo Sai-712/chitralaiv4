@@ -202,12 +202,6 @@ const Navbar: React.FC<NavbarProps> = ({
       const email = decoded.email || '';
       const picture = decoded.picture || '';
 
-      // Set form state
-      setSignInForm({
-        ...signInForm,
-        name: name,
-      });
-
       // Check if there was a pending action before login
       const pendingAction = localStorage.getItem('pendingAction');
       const role = pendingAction === 'createEvent' ? 'organizer' : 'attendee';
@@ -224,7 +218,7 @@ const Navbar: React.FC<NavbarProps> = ({
         userId: email, // Using email as userId for simplicity
         email: email,
         name: name || '',
-        mobile: signInForm.mobile || '',
+        mobile: '', // Empty string for mobile, no longer collecting it
         role: role
       };
       
@@ -232,7 +226,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
       // Store essential user data in localStorage for session management
       localStorage.setItem('userEmail', email);
-      localStorage.setItem('userMobile', signInForm.mobile || '');
+      localStorage.setItem('userMobile', ''); // Empty string for mobile, no longer collecting it
       
       // We keep these in localStorage for now for backward compatibility
       if (credentialResponse.credential) {
@@ -249,7 +243,7 @@ const Navbar: React.FC<NavbarProps> = ({
         name,
         email,
         picture,
-        mobile: signInForm.mobile || ''
+        mobile: ''
       });
       setUserEmail(email);
       setIsLoggedIn(true);
@@ -286,30 +280,11 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   const validateForm = () => {
-    let isValid = true;
-    const errors = {
-      name: '',
-      mobile: ''
-    };
-
-    if (!signInForm.name.trim()) {
-      errors.name = 'Name is required';
-      isValid = false;
-    }
-
-    if (!signInForm.mobile.trim()) {
-      errors.mobile = 'Mobile number is required';
-      isValid = false;
-    } else if (!/^[0-9]{10}$/.test(signInForm.mobile.trim())) {
-      errors.mobile = 'Please enter a valid 10-digit mobile number';
-      isValid = false;
-    }
-
-    setFormErrors(errors);
-    return isValid;
+    // No longer validating form, always true
+    return true;
   };
 
-  const isFormValid = signInForm.name.trim() !== '' && /^[0-9]{10}$/.test(signInForm.mobile.trim());
+  const isFormValid = true; // Always valid since we don't need form fields anymore
 
   const handleSignOut = async () => {
     // Clear user data from localStorage
@@ -557,98 +532,17 @@ const Navbar: React.FC<NavbarProps> = ({
 
               {/* Form Fields */}
               <div className="space-y-5">
-                {/* Name Field */}
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1 sm:text-base">
-                    Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    placeholder="Enter your name"
-                    className={`w-full px-4 py-3 border ${
-                      formErrors.name ? 'border-red-500' : 'border-gray-300'
-                    } rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-base sm:text-lg`}
-                    value={signInForm.name}
-                    onChange={(e) => {
-                      setSignInForm({...signInForm, name: e.target.value});
-                      if (formErrors.name) {
-                        setFormErrors({...formErrors, name: ''});
-                      }
-                    }}
-                  />
-                  {formErrors.name && (
-                    <p className="mt-2 text-sm text-red-500 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {formErrors.name}
-                    </p>
-                  )}
-                </div>
-
-                {/* Mobile Number Field */}
-                <div>
-                  <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1 sm:text-base">
-                    Mobile Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-3">
-                    <select
-                      className="w-24 px-3 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-base sm:text-lg bg-gray-50"
-                      defaultValue="+91"
-                    >
-                      <option value="+91">+91</option>
-                    </select>
-                    <input
-                      type="tel"
-                      id="mobile"
-                      placeholder="Enter 10-digit mobile number"
-                      className={`flex-1 px-4 py-3 border ${
-                        formErrors.mobile ? 'border-red-500' : 'border-gray-300'
-                      } rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-base sm:text-lg`}
-                      value={signInForm.mobile}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        setSignInForm({...signInForm, mobile: value});
-                        if (formErrors.mobile) {
-                          setFormErrors({...formErrors, mobile: ''});
-                        }
-                      }}
+                {/* Google Sign In */}
+                <div className="mt-4">
+                  <div className="flex justify-center">
+                    <GoogleLogin 
+                      onSuccess={handleSignIn} 
+                      onError={() => {
+                        console.error('Google Login Error');
+                        setSignInError('Failed to sign in. Please try again.');
+                      }} 
                     />
                   </div>
-                  {formErrors.mobile && (
-                    <p className="mt-2 text-sm text-red-500 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {formErrors.mobile}
-                    </p>
-                  )}
-                </div>
-
-                {/* Divider */}
-                <div className="relative my-8">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-gray-500 text-base">Continue with</span>
-                  </div>
-                </div>
-
-                {/* Google Sign In */}
-                <div className={`${!isFormValid ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  {isFormValid ? (
-                    <div className="flex justify-center">
-                      <GoogleLogin 
-                        onSuccess={handleSignIn} 
-                        onError={() => {
-                          console.error('Google Login Error');
-                          setSignInError('Failed to sign in. Please try again.');
-                        }} 
-                      />
-                    </div>
-                  ) : (
-                    <div className="text-center text-sm text-gray-500 mt-2 bg-gray-50 p-4 rounded-xl">
-                      Please fill in all required fields to continue
-                    </div>
-                  )}
                 </div>
 
                 {/* Error Message */}
